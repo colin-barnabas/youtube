@@ -13,16 +13,15 @@
   "Use youtube-dl to search for a youtube url based on the input string.
 The --get-url option returns a nasty url. --get-thumbnail returns a url that
 contains the url id we're interested it."
-  (let ((url-id nil))
-    (with-output-to-string (out)
-      (run-program
-       (format nil
-               "youtube-dl --get-thumbnail \"ytsearch:~a\""
-               str)
-       :output out)
-      (let* ((thumb-url (get-output-stream-string out))
-             (partial-id (scan-to-strings "/vi/.*/" thumb-url)))
-        (setf url-id (subseq partial-id 4 (- (length partial-id) 1)))))
+  (let ((url-id nil)
+        (ptrn (cl-ppcre:create-scanner "\\w{11}")))
+    (setf url-id
+          (scan-to-strings ptrn
+                           (run-program
+                            (format nil
+                                    "youtube-dl --get-thumbnail \"ytsearch:~a\""
+                                    str)
+                            :output '(:string :stripped t))))
     (format nil "https://www.youtube.com/watch?v=~a" url-id)))
 
 (defun play (url-or-song &key (video nil) (pos "0"))
